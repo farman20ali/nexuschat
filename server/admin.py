@@ -179,6 +179,10 @@ def cmd_setup_security_questions(db, target_username=None):
         q1 = input("Enter Custom Question #1: ").strip() or "Custom Security Question #1"
 
     a1 = getpass.getpass(f"Answer for '{q1}': ").strip()
+    a1_confirm = getpass.getpass(f"Confirm Answer for '{q1}': ").strip()
+    if a1 != a1_confirm:
+        print("\n[ERROR] Security answer #1 entries do not match! Aborting configuration to prevent locking your account.\n")
+        sys.exit(1)
 
     print("\n1. What is your favorite book/movie?")
     print("2. What was your mother's maiden name?")
@@ -196,6 +200,10 @@ def cmd_setup_security_questions(db, target_username=None):
         q2 = input("Enter Custom Question #2: ").strip() or "Custom Security Question #2"
 
     a2 = getpass.getpass(f"Answer for '{q2}': ").strip()
+    a2_confirm = getpass.getpass(f"Confirm Answer for '{q2}': ").strip()
+    if a2 != a2_confirm:
+        print("\n[ERROR] Security answer #2 entries do not match! Aborting configuration to prevent locking your account.\n")
+        sys.exit(1)
 
     ok, err = db.set_security_questions(user, q1, a1, q2, a2)
     if ok:

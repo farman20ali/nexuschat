@@ -4,8 +4,30 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 
 
+def get_config_path() -> Path:
+    if "NEXUSCHAT_CONFIG_PATH" in os.environ:
+        return Path(os.environ["NEXUSCHAT_CONFIG_PATH"]).expanduser().resolve()
+    
+    local_env = ROOT / ".env"
+    if (ROOT / "pyproject.toml").is_file() or local_env.is_file():
+        return local_env
+
+    if os.name == "nt":
+        app_data = os.environ.get("APPDATA")
+        base = Path(app_data) if app_data else Path.home() / "AppData" / "Roaming"
+        config_dir = base / "NexusChat"
+    else:
+        xdg_config = os.environ.get("XDG_CONFIG_HOME")
+        base = Path(xdg_config) if xdg_config else Path.home() / ".config"
+        config_dir = base / "nexuschat"
+
+    config_dir.mkdir(parents=True, exist_ok=True)
+    return config_dir / "config.env"
+
+
 def load_env(path=None):
-    env_path = Path(path or ROOT / ".env")
+    from shared.auth import decrypt_config_val
+    env_path = Path(path) if path else get_config_path()
     if not env_path.is_file():
         return
     for raw in env_path.read_text(encoding="utf-8").splitlines():
@@ -15,8 +37,11 @@ def load_env(path=None):
         key, value = line.split("=", 1)
         key = key.strip()
         value = value.strip().strip('"').strip("'")
+        if value.startswith("enc:"):
+            value = decrypt_config_val(value)
         if key and key not in os.environ:
             os.environ[key] = value
+
 
 
 def resolve_path(value, default):

@@ -56,6 +56,17 @@ def run_server(host="0.0.0.0", port=None, discovery_port=None, file_dir=None):
     import logging
     import signal
 
+    cfg_path = settings.get_config_path()
+    if not cfg_path.is_file():
+        print("\n" + "=" * 68)
+        print(" [ERROR] Configuration file not found!")
+        print("=" * 68)
+        print(f" Target path: {cfg_path}")
+        print("\n Please run the database setup wizard first before starting the server:")
+        print("    nexuschat setup-db")
+        print("=" * 68 + "\n")
+        sys.exit(1)
+
     if file_dir:
         settings.set_file_dir(file_dir)
 
@@ -108,6 +119,8 @@ def run_server(host="0.0.0.0", port=None, discovery_port=None, file_dir=None):
 
 
 def run_setup_db():
+    from server import settings
+    from shared.auth import encrypt_config_val
     print("\n--- NexusChat Database Setup Wizard ---")
     try:
         host = input("PostgreSQL Host [localhost]: ").strip() or "localhost"
@@ -117,17 +130,22 @@ def run_setup_db():
         import getpass
         password = getpass.getpass("Database Password [admin123]: ").strip() or "admin123"
 
+        enc_db_pass = encrypt_config_val(password)
+        enc_admin_pass = encrypt_config_val("admin123")
+        enc_jwt_secret = encrypt_config_val("nexuschat_secret_key_change_in_production_2026")
+        enc_master_key = encrypt_config_val("master_recovery_key_123")
+
         env_content = (
             "# ==============================================================================\n"
-            "# NexusChat Server Configuration (.env)\n"
+            "# NexusChat Server Configuration File\n"
             "# ==============================================================================\n"
-            "# The client never reads these values and never connects directly to PostgreSQL.\n\n"
+            "# Sensitive passwords and keys are stored with XOR obfuscation (enc:...)\n\n"
             "# --- Database Connection (PostgreSQL) ---\n"
             f"CHAT_DB_HOST={host}\n"
             f"CHAT_DB_PORT={port}\n"
             f"CHAT_DB_NAME={dbname}\n"
             f"CHAT_DB_USER={user}\n"
-            f"CHAT_DB_PASSWORD={password}\n\n"
+            f"CHAT_DB_PASSWORD={enc_db_pass}\n\n"
             "# --- Networking Ports ---\n"
             "CHAT_TCP_PORT=8082\n"
             "CHAT_DISCOVERY_PORT=8083\n\n"
@@ -135,14 +153,15 @@ def run_setup_db():
             "CHAT_DATA_DIR=./data\n"
             "CHAT_FILE_DIR=./data/files\n\n"
             "# --- Security & Administration ---\n"
-            "NEXUS_ADMIN_PASSWORD=admin123\n"
-            "NEXUS_JWT_SECRET=nexuschat_secret_key_change_in_production_2026\n"
-            "NEXUS_MASTER_KEY=master_recovery_key_123\n"
+            f"NEXUS_ADMIN_PASSWORD={enc_admin_pass}\n"
+            f"NEXUS_JWT_SECRET={enc_jwt_secret}\n"
+            f"NEXUS_MASTER_KEY={enc_master_key}\n"
         )
 
-        env_path = ROOT / ".env"
+        env_path = settings.get_config_path()
+        env_path.parent.mkdir(parents=True, exist_ok=True)
         env_path.write_text(env_content, encoding="utf-8")
-        print(f"\nSaved settings to: {env_path}")
+        print(f"\n[OK] Saved secure configuration to: {env_path}")
 
         print("\nTesting connection and running migrations...")
         os.environ["CHAT_DB_HOST"] = host
@@ -168,6 +187,7 @@ def run_setup_db():
     except (KeyboardInterrupt, SystemExit):
         print("\n\n[INFO] Database setup wizard cancelled.")
         sys.exit(0)
+
 
 
 def run_admin(args):

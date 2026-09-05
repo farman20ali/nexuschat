@@ -93,3 +93,33 @@ def verify_security_answer(answer: str, stored_hash: str) -> bool:
         return bcrypt.checkpw(norm.encode("utf-8"), stored_bytes)
     except Exception:
         return False
+
+
+CONFIG_KEY = "NexusChat_Secure_Config_Key_2026"
+
+
+def encrypt_config_val(plain_text: str) -> str:
+    """Encrypt a config string using XOR cipher + Base64 with 'enc:' prefix."""
+    if not plain_text:
+        return ""
+    key_bytes = CONFIG_KEY.encode("utf-8")
+    data_bytes = plain_text.encode("utf-8")
+    cipher_bytes = bytes([b ^ key_bytes[i % len(key_bytes)] for i, b in enumerate(data_bytes)])
+    return "enc:" + base64.b64encode(cipher_bytes).decode("utf-8")
+
+
+def decrypt_config_val(enc_text: str) -> str:
+    """Decrypt an 'enc:' prefixed config string, returning un-encrypted string as fallback."""
+    if not enc_text:
+        return ""
+    if not enc_text.startswith("enc:"):
+        return enc_text
+    try:
+        raw_b64 = enc_text[4:]
+        cipher_bytes = base64.b64decode(raw_b64.encode("utf-8"))
+        key_bytes = CONFIG_KEY.encode("utf-8")
+        plain_bytes = bytes([b ^ key_bytes[i % len(key_bytes)] for i, b in enumerate(cipher_bytes)])
+        return plain_bytes.decode("utf-8")
+    except Exception:
+        return enc_text
+

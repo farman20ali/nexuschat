@@ -124,6 +124,20 @@ class TestNexusChatFeatures(unittest.TestCase):
         fail_ver, _ = self.db.verify_security_answers("alice_test", "Wrong", "London")
         self.assertFalse(fail_ver)
 
+    def test_05_config_encryption(self):
+        from shared.auth import encrypt_config_val, decrypt_config_val
+        secret_pass = "super_secret_db_pass_123!"
+        enc = encrypt_config_val(secret_pass)
+        self.assertTrue(enc.startswith("enc:"))
+        self.assertNotEqual(enc, secret_pass)
+
+        dec = decrypt_config_val(enc)
+        self.assertEqual(dec, secret_pass)
+
+        # Plain text fallback test
+        self.assertEqual(decrypt_config_val("plain_pass"), "plain_pass")
+
 
 if __name__ == "__main__":
     unittest.main()
+
