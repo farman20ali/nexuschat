@@ -1,3 +1,4 @@
+from __future__ import annotations
 import base64
 import hashlib
 import hmac
@@ -5,6 +6,7 @@ import json
 import os
 import time
 import bcrypt
+from typing import Tuple, Dict, Any
 
 DEFAULT_SECRET = os.environ.get("NEXUS_JWT_SECRET", "nexuschat_secret_key_change_in_production_2026")
 
@@ -41,7 +43,7 @@ def create_jwt_token(payload: dict, secret_key: str = None, expires_in: int = 86
     return f"{header_b64}.{payload_b64}.{signature_b64}"
 
 
-def verify_jwt_token(token: str, secret_key: str = None) -> tuple[bool, dict]:
+def verify_jwt_token(token: str, secret_key: str = None) -> Tuple[bool, Dict[str, Any]]:
     """Verify a signed HS256 JWT token and return (valid, payload)."""
     if not token or not isinstance(token, str):
         return False, {}
