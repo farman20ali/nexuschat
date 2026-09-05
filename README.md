@@ -166,7 +166,31 @@ python manage.py publish --pypi --test
 python manage.py publish --pypi
 ```
 
-### 4. Clean Workspace Artifacts
+### 4. Version Management & Release Notes Creation
+```bash
+# Check version synchronization status across tracked files
+python manage.py version
+
+# Bump version (major, minor, or patch) and create release notes template
+python manage.py version --bump patch
+
+# Manually generate/verify release notes in docs/release_notes/
+python manage.py release-notes
+```
+
+### 5. Automated GitHub Releases via GitHub Actions
+When a version tag is pushed (e.g. `v1.0.0`), the GitHub Actions workflow (`.github/workflows/release.yml`) automatically:
+1. Builds PyPI source distributions (`.tar.gz` & `.whl`).
+2. Builds standalone Windows (`.zip`) and Linux (`.tar.gz`) client packages.
+3. Extracts release notes from `docs/release_notes/RELEASE_NOTES_V<VERSION>.md`.
+4. Creates a official GitHub Release attaching all binary packages and changelog notes.
+
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+### 6. Clean Workspace Artifacts
 ```bash
 python manage.py clean
 ```

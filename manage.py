@@ -131,7 +131,30 @@ def set_version(new_version):
             readme_path.write_text(r_new_content, encoding="utf-8")
             log_success(f"Updated README.md package references -> v{clean_ver}")
 
+    # Ensure release notes file exists in docs/release_notes/
+    ensure_release_notes(clean_ver)
+
     log_success(f"Project successfully updated to v{clean_ver}!")
+
+
+def ensure_release_notes(version):
+    """Ensure release notes file exists in docs/release_notes/ for given version."""
+    clean_ver = version.lstrip("v").strip()
+    notes_dir = ROOT / "docs" / "release_notes"
+    notes_dir.mkdir(parents=True, exist_ok=True)
+    notes_file = notes_dir / f"RELEASE_NOTES_V{clean_ver}.md"
+
+    if not notes_file.exists():
+        template_file = notes_dir / "TEMPLATE.md"
+        if template_file.exists():
+            content = template_file.read_text(encoding="utf-8").replace("{VERSION}", clean_ver)
+        else:
+            content = f"# NexusChat v{clean_ver} Release Notes\n\n- Release v{clean_ver}.\n"
+        notes_file.write_text(content, encoding="utf-8")
+        log_success(f"Created release notes template: docs/release_notes/RELEASE_NOTES_V{clean_ver}.md")
+    else:
+        log(f"Release notes verified: docs/release_notes/RELEASE_NOTES_V{clean_ver}.md")
+
 
 
 def bump_version(level):
@@ -427,6 +450,10 @@ def main():
     # Clean subcommand
     subparsers.add_parser("clean", help="Remove all build artifacts and caches")
 
+    # Release Notes subcommand
+    rn_p = subparsers.add_parser("release-notes", help="Ensure or generate release notes template in docs/release_notes/")
+    rn_p.add_argument("--ver", help="Specify version string (default: current project version)")
+
     # Run subcommand
     run_p = subparsers.add_parser("run", help="Run application component")
     run_p.add_argument("target", choices=["client", "server", "setup-db", "admin"], help="Component to run")
@@ -453,6 +480,12 @@ def main():
                 in_sync, _ = check_version_sync()
                 if args.check and not in_sync:
                     sys.exit(1)
+        elif args.action == "release-notes":
+            ver = args.ver
+            if not ver:
+                _, ver = check_version_sync(silent=True)
+            ensure_release_notes(ver)
+
         elif args.action in ("setup", "install"):
             setup_environment(dev=args.dev)
         elif args.action == "build":
