@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "nexuschat"
+version = "2.0.0"
+description = "Cross-platform high-performance LAN messenger and secure file sharing application with PostgreSQL backend."
+readme = "README.md"
+requires-python = ">=3.8"
+license = { text = "MIT" }
+authors = [
+    { name = "NexusChat Contributors" }
+]
+dependencies = [
+    "psycopg2-binary>=2.9.0",
+    "bcrypt>=4.0.0",
+]
+
+[project.scripts]
+nexuschat = "nexuschat.cli:main"
+
+[tool.setuptools]
+packages = ["nexuschat", "client", "server", "shared"]
