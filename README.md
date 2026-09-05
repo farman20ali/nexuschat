@@ -155,7 +155,7 @@ python manage.py build --client
 ```bash
 python manage.py build --pypi
 ```
-* Compiles `nexuschat-2.0.0.tar.gz` and `nexuschat-2.0.0-py3-none-any.whl` into `dist/`.
+* Compiles `nexuschat-1.0.0.tar.gz` and `nexuschat-1.0.0-py3-none-any.whl` into `dist/`.
 
 ### 3. Publish to PyPI
 ```bash
