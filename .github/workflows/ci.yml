@@ -19,6 +19,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Setup PostgreSQL
+        uses: ikalnytskyi/action-setup-postgres@v7
+        with:
+          postgres-version: '15'
+          username: 'postgres'
+          password: 'admin123'
+          database: 'tkinter'
+          port: '5433'
+
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
@@ -35,5 +44,12 @@ jobs:
           python manage.py version --check
 
       - name: Run Tests
+        env:
+          CHAT_DB_HOST: localhost
+          CHAT_DB_PORT: 5433
+          CHAT_DB_USER: postgres
+          CHAT_DB_PASSWORD: admin123
+          CHAT_DB_NAME: tkinter
         run: |
           pytest -v
+
