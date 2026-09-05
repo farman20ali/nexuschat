@@ -1,12 +1,35 @@
 import logging
 import os
 import re
+import sys
+
+# Register PostgreSQL bin directory in DLL search path for Windows Python 3.8+
+if sys.platform == "win32" and sys.version_info >= (3, 8) and hasattr(os, "add_dll_directory"):
+    path_dirs = os.environ.get("PATH", "").split(os.pathsep)
+    for p in path_dirs:
+        if p and os.path.isdir(p) and ("postgre" in p.lower() or "pgsql" in p.lower() or "pg" in p.lower()):
+            try:
+                os.add_dll_directory(p)
+            except (OSError, ValueError):
+                pass
+    for default_path in [
+        r"C:\Program Files\PostgreSQL\16\bin",
+        r"C:\Program Files\PostgreSQL\15\bin",
+        r"C:\Program Files\PostgreSQL\14\bin",
+        r"C:\Program Files\PostgreSQL\13\bin",
+    ]:
+        if os.path.isdir(default_path):
+            try:
+                os.add_dll_directory(default_path)
+            except (OSError, ValueError):
+                pass
 
 import bcrypt
 import psycopg2
 import psycopg2.extras
 from psycopg2 import sql
 from psycopg2.pool import ThreadedConnectionPool
+
 
 from server import settings
 from shared.constants import EVERYONE

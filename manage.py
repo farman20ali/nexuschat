@@ -232,12 +232,20 @@ def setup_environment(dev=False):
     log("Verifying setup and module imports...")
     try:
         import nexuschat
+        if sys.platform == "win32" and sys.version_info >= (3, 8) and hasattr(os, "add_dll_directory"):
+            for p in os.environ.get("PATH", "").split(os.pathsep):
+                if p and os.path.isdir(p) and ("postgre" in p.lower() or "pgsql" in p.lower() or "pg" in p.lower()):
+                    try:
+                        os.add_dll_directory(p)
+                    except (OSError, ValueError):
+                        pass
         import psycopg2
         import bcrypt
         log_success(f"All module imports verified! (nexuschat v{nexuschat.__version__})")
     except Exception as exc:
         log_error(f"Verification failed during import check: {exc}")
         sys.exit(1)
+
 
     log_success("Setup complete! Start server: 'nexuschat server' | Start client: 'nexuschat client'")
 
